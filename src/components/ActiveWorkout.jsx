@@ -1,10 +1,13 @@
 import { useState } from 'react';
+import MacroCoach from './MacrosCoach';
 
-function ActiveWorkout({onFinish}) {
+function ActiveWorkout({ onFinish }) {
     const [exercise, setExercise] = useState("");
     const [sets, setSets] = useState([]);
-
+    const [currentSong, setCurrentSong] = useState(null);
+    const [macros, setMacros] = useState({ protein: 0, carbs: 0 });
     // --- LOGIC ZONE (Functions go here) ---
+
 
     const addSet = () => {
         const newSet = {
@@ -32,26 +35,46 @@ function ActiveWorkout({onFinish}) {
         setSets(updatedSets);
     };
 
-    const handleFinish=() => {
-        if (sets.length===0) return alert ("Please add at least one set before finishing the workout.");
+    const handleFinish = () => {
+        if (sets.length === 0) return alert("Please add at least one set before finishing the workout.");
 
-    const workoutSummary = {
-        id: Date.now(),
-        name: exercise,
-        date: new Date().toLocaleDateString(),
-        sets: sets,
-        totalVolume: sets.reduce((total, set) => total + (set.weight * set.reps), 0),
+        const totalVolume = sets.reduce((acc, set) => {
+            const weight = parseFloat(set.weight) || 0;
+            const reps = parseInt(set.reps) || 0;
+            return acc + (weight * reps);
+        }, 0);
+        const maxWeight = sets.reduce((max, set) => {
+            const weight = parseFloat(set.weight) || 0;
+            return weight > max ? weight : max;
+        }, 0);
+        const suggestedProtein = totalVolume > 0 ? (20 + (totalVolume / 1000) * 2).toFixed(1) : 0;
+        const suggestedCarbs = totalVolume > 0 ? ((totalVolume / 500) * 10).toFixed(1) : 0;
+
+        const workoutSummary = {
+            id: Date.now(),
+            name: exercise,
+            date: new Date().toLocaleDateString(),
+            sets: sets,
+            totalVolume: totalVolume,
+            maxWeight: maxWeight,
+            song: currentSong,
+            macros: {
+                protein: suggestedProtein,
+                carbs: suggestedCarbs
+            }
         };
 
-    onFinish(workoutSummary);
-    setExercise("");
-    setSets([]);
+        onFinish(workoutSummary);
+        setExercise("");
+        setSets([]);
+
+
     }
 
     // --- VISUAL ZONE (JSX goes here) ---
     return (
-        <section style={{ border: '1px solid #444', padding: '20px', borderRadius: '8px' }}>
-            <h2>Current Session</h2>
+        <section style={{ border: '1px solid #444', padding: '10px', borderRadius: '4px' }}>
+            <h2>New Exercise</h2>
 
             <input
                 type="text"
@@ -60,11 +83,12 @@ function ActiveWorkout({onFinish}) {
                 placeholder="Exercise Name (e.g. Squat)"
             />
 
-            <button onClick={addSet} style={{ marginLeft: '10px' }}>
+            <button onClick={addSet} style={{ marginLeft: '10px'
+            
+             }}>
                 + Add Set
             </button>
-
-            <div style={{ marginTop: '20px' }}>
+            <div style={{ marginTop: '5px' }}>
                 {/* We use .map() here to turn our data into HTML */}
                 {sets.map((set, index) => (
                     <div key={set.id} style={{ marginBottom: '10px' }}>
@@ -83,17 +107,17 @@ function ActiveWorkout({onFinish}) {
                         />
                         <button
                             onClick={() => deleteSet(set.id)}
-                            style={{ color: 'red', border: '1px solid red' }}
+                            style={{ color: 'red', border: 'px solid red' }}
                         >
                             Delete
                         </button>
 
-                        
+
                     </div>
                 ))}
-                <button onClick={handleFinish} style= {{ marginLeft: '10px', backgroundColor: 'green', color: 'white' }}>
-                            Finish & Save Workout
-                        </button>
+                <button onClick={handleFinish} style={{ marginLeft: '10px', backgroundColor: 'green', color: 'white' }}>
+                    Finish & Save Exercise
+                </button>
             </div>
         </section>
     );
